@@ -27,7 +27,7 @@
                 <a href="#" class="block rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800">
                     Courses
                 </a>
-                <a href="#" class="block rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800">
+                <a href="results.html" class="block rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800">
                     Results
                 </a>
                 <a href="#" class="block rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800">
@@ -119,6 +119,94 @@
                     Waiting to connect to the backend...
                 </div>
             </section>
+
+
+            <!-- Teacher Marks Management -->
+            <section id="marksSection" class="mt-10">
+
+                <header class="mb-6">
+                    <p class="text-sm text-slate-500">Dashboard / Marks</p>
+                    <h2 class="mt-2 text-2xl font-bold">Marks Management</h2>
+                    <p class="mt-2 text-slate-500">
+                        Enter and update student assessment marks.
+                    </p>
+                </header>
+
+                <!-- Teacher and Course Selection -->
+                <div class="mb-6 grid gap-4 rounded-xl border bg-white p-6 shadow-sm md:grid-cols-2">
+
+                    <div>
+                        <label for="teacherCode" class="mb-2 block text-sm font-medium">
+                            Teacher Code
+                        </label>
+                        <input id="teacherCode" type="text" value="T-002" placeholder="Example: T-002"
+                            class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500">
+                    </div>
+
+                    <div class="flex items-end">
+                        <button id="loadTeacherCoursesBtn"
+                            class="w-full rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700">
+                            Load My Courses
+                        </button>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="marksCourseSelect" class="mb-2 block text-sm font-medium">
+                            Select Course
+                        </label>
+                        <select id="marksCourseSelect" disabled
+                            class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500">
+                            <option value="">Load your courses first</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Marks Table -->
+                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
+                    <div class="border-b p-6">
+                        <h3 class="text-lg font-semibold">Student Marks</h3>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Assignment: 10 | Class Test: 20 | Midterm: 40 | Final: 80
+                        </p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-600">
+                                <tr>
+                                    <th class="px-4 py-4">Student ID</th>
+                                    <th class="px-4 py-4">Name</th>
+                                    <th class="px-4 py-4">Assignment /10</th>
+                                    <th class="px-4 py-4">Class Test /20</th>
+                                    <th class="px-4 py-4">Midterm /40</th>
+                                    <th class="px-4 py-4">Final /80</th>
+                                    <th class="px-4 py-4">Total /150</th>
+                                    <th class="px-4 py-4">Grade</th>
+                                    <th class="px-4 py-4">GP</th>
+                                    <th class="px-4 py-4">Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="marksTableBody">
+                                <tr>
+                                    <td colspan="10" class="px-4 py-10 text-center text-slate-500">
+                                        Select a course to load student marks.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="marksMessage" class="border-t px-6 py-4 text-sm text-slate-500">
+                        Waiting for course selection...
+                    </div>
+
+                </div>
+
+            </section>
+
 
         </main>
 

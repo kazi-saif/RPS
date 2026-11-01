@@ -202,3 +202,302 @@ async function deleteStudent(studentId) {
 }
 
 loadStudents();
+
+
+
+
+// ================================
+// TEACHER MARKS MANAGEMENT
+// ================================
+
+const teacherCodeInput = document.getElementById("teacherCode");
+const loadCoursesBtn = document.getElementById("loadTeacherCoursesBtn");
+const courseSelect = document.getElementById("marksCourseSelect");
+const marksTableBody = document.getElementById("marksTableBody");
+const marksMessage = document.getElementById("marksMessage");
+
+// Load courses assigned to a teacher
+async function loadTeacherCourses() {
+    const teacherCode = teacherCodeInput.value.trim();
+
+    if (!teacherCode) {
+        marksMessage.textContent = "Please enter a teacher code.";
+        return;
+    }
+
+    try {
+        marksMessage.textContent = "Loading courses...";
+
+        const response = await fetch(
+            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Could not load courses.");
+        }
+
+        courseSelect.innerHTML = "";
+
+        if (data.courses.length === 0) {
+            courseSelect.add(new Option("No assigned courses found", ""));
+            courseSelect.disabled = true;
+            marksMessage.textContent = "This teacher has no assigned courses.";
+            return;
+        }
+
+        courseSelect.add(new Option("Select a course", ""));
+
+        data.courses.forEach(course => {
+            const option = new Option(
+                `${course.course_code} - ${course.course_name}`,
+                course.course_code
+            );
+
+            courseSelect.add(option);
+        });
+
+        courseSelect.disabled = false;
+        marksMessage.textContent =
+            `${data.courses.length} course(s) loaded successfully.`;
+
+    } catch (error) {
+        console.error(error);
+        marksMessage.textContent = error.message;
+    }
+}
+
+
+// Load students and their marks for selected course
+async function loadCourseMarks() {
+    const teacherCode = teacherCodeInput.value.trim();
+    const courseCode = courseSelect.value;
+
+    if (!teacherCode || !courseCode) {
+        return;
+    }
+
+    try {
+        marksMessage.textContent = "Loading student marks...";
+
+        marksTableBody.innerHTML = "";
+
+        const response = await fetch(
+            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}/${encodeURIComponent(courseCode)}/marks`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Could not load marks.");
+        }
+
+        if (data.students.length === 0) {
+            marksTableBody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-4 py-10 text-center text-slate-500">
+                        No students enrolled in this course.
+                    </td>
+                </tr>
+            `;
+
+            marksMessage.textContent = "No students found.";
+            return;
+        }
+
+        data.students.forEach(student => {
+            const row = document.createElement("tr");
+            row.className = "border-t hover:bg-slate-50";
+
+            // Student ID
+            const idCell = document.createElement("td");
+            idCell.className = "px-4 py-4 whitespace-nowrap";
+            idCell.textContent = student.student_id;
+
+            // Student name
+            const nameCell = document.createElement("td");
+            nameCell.className = "px-4 py-4 whitespace-nowrap";
+            nameCell.textContent = student.name;
+
+            // Marks input fields
+            const assignmentInput = createMarksInput(
+                student.assignment_marks, 10
+            );
+
+            const classTestInput = createMarksInput(
+                student.class_test_marks, 20
+            );
+
+            const midtermInput = createMarksInput(
+                student.midterm_marks, 40
+            );
+
+            const finalInput = createMarksInput(
+                student.final_marks, 80
+            );
+
+            const assignmentCell = createInputCell(assignmentInput);
+            const classTestCell = createInputCell(classTestInput);
+            const midtermCell = createInputCell(midtermInput);
+            const finalCell = createInputCell(finalInput);
+
+            // Total, Grade and GP
+            const totalCell = document.createElement("td");
+            totalCell.className = "px-4 py-4 font-semibold";
+            totalCell.textContent = student.total_marks ?? "—";
+
+            const gradeCell = document.createElement("td");
+            gradeCell.className = "px-4 py-4 font-semibold";
+            gradeCell.textContent = student.grade ?? "—";
+
+            const gpCell = document.createElement("td");
+            gpCell.className = "px-4 py-4";
+            gpCell.textContent = student.grade_point ?? "—";
+
+            // Save button
+            const actionCell = document.createElement("td");
+            actionCell.className = "px-4 py-4";
+
+            const saveButton = document.createElement("button");
+            saveButton.textContent = "Save";
+            saveButton.className =
+                "rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700";
+
+            saveButton.addEventListener("click", () => {
+                saveStudentMarks(
+                    student.student_id,
+                    assignmentInput,
+                    classTestInput,
+                    midtermInput,
+                    finalInput,
+                    saveButton
+                );
+            });
+
+            actionCell.appendChild(saveButton);
+
+            row.append(
+                idCell,
+                nameCell,
+                assignmentCell,
+                classTestCell,
+                midtermCell,
+                finalCell,
+                totalCell,
+                gradeCell,
+                gpCell,
+                actionCell
+            );
+
+            marksTableBody.appendChild(row);
+        });
+
+        marksMessage.textContent =
+            `${data.students.length} student(s) loaded successfully.`;
+
+    } catch (error) {
+        console.error(error);
+        marksMessage.textContent = error.message;
+    }
+}
+
+
+// Create a marks input
+function createMarksInput(value, max) {
+    const input = document.createElement("input");
+
+    input.type = "number";
+    input.min = "0";
+    input.max = String(max);
+    input.step = "0.01";
+    input.value = value ?? 0;
+
+    input.className =
+        "w-24 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500";
+
+    return input;
+}
+
+
+// Create table cell for an input
+function createInputCell(input) {
+    const cell = document.createElement("td");
+    cell.className = "px-4 py-4";
+    cell.appendChild(input);
+    return cell;
+}
+
+
+// Save or update student marks
+async function saveStudentMarks(
+    studentId,
+    assignmentInput,
+    classTestInput,
+    midtermInput,
+    finalInput,
+    saveButton
+) {
+    const teacherCode = teacherCodeInput.value.trim();
+    const courseCode = courseSelect.value;
+
+    const marks = {
+        assignment_marks: Number(assignmentInput.value),
+        class_test_marks: Number(classTestInput.value),
+        midterm_marks: Number(midtermInput.value),
+        final_marks: Number(finalInput.value)
+    };
+
+    // Frontend validation
+    if (
+        marks.assignment_marks < 0 || marks.assignment_marks > 10 ||
+        marks.class_test_marks < 0 || marks.class_test_marks > 20 ||
+        marks.midterm_marks < 0 || marks.midterm_marks > 40 ||
+        marks.final_marks < 0 || marks.final_marks > 80 ||
+        Object.values(marks).some(value => !Number.isFinite(value))
+    ) {
+        alert("Please enter valid marks within the allowed limits.");
+        return;
+    }
+
+    try {
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving...";
+
+        const response = await fetch(
+            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}/${encodeURIComponent(courseCode)}/marks/${encodeURIComponent(studentId)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(marks)
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.detail || "Could not save marks.");
+        }
+
+        marksMessage.textContent =
+            `Marks saved successfully for ${studentId}.`;
+
+        // Refresh table to show calculated total, grade and GP
+        await loadCourseMarks();
+
+    } catch (error) {
+        console.error(error);
+        alert(`Save failed: ${error.message}`);
+
+        saveButton.disabled = false;
+        saveButton.textContent = "Save";
+    }
+}
+
+
+// Button and dropdown events
+loadCoursesBtn.addEventListener("click", loadTeacherCourses);
+
+courseSelect.addEventListener("change", loadCourseMarks);
