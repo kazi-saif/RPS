@@ -940,8 +940,21 @@ def save_course_marks(
 # STUDENT RESULT API
 # ================================
 
+
 @app.get("/student-results/{student_id}")
-def get_student_results(student_id: str):
+def get_student_results(
+    student_id: str,
+    department_id: int,
+    session_id: int,
+    semester: int
+):
+
+    # Validate semester
+    if semester < 1 or semester > 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Semester must be between 1 and 8"
+        )
 
     with engine.connect() as connection:
 
@@ -951,8 +964,14 @@ def get_student_results(student_id: str):
                 SELECT student_id, name, email
                 FROM students
                 WHERE student_id = :student_id
+                AND department_id = :department_id
+                AND session_id = :session_id
             """),
-            {"student_id": student_id}
+            {
+                "student_id": student_id,
+                "department_id": department_id,
+                "session_id": session_id
+            }
         ).mappings().first()
 
         if not student:
@@ -997,11 +1016,11 @@ def get_student_results(student_id: str):
 
     for row in result:
 
-        semester = row["semester"]
+        course_semester = row["semester"]
 
-        if semester not in semesters:
-            semesters[semester] = {
-                "semester": semester,
+        if course_semester not in semesters:
+            semesters[course_semester] = {
+                "semester": course_semester,
                 "courses": [],
                 "gpa": None,
                 "total_credits": 0,
@@ -1010,8 +1029,7 @@ def get_student_results(student_id: str):
 
         course = dict(row)
 
-        # Add course to semester
-        semesters[semester]["courses"].append(course)
+        semesters[course_semester]["courses"].append(course)
 
         # Calculate GPA only for courses with saved marks
         if row["grade_point"] is not None and row["total_marks"] is not None:
@@ -1019,9 +1037,9 @@ def get_student_results(student_id: str):
             credit = float(row["credit"])
             grade_point = float(row["grade_point"])
 
-            semesters[semester]["total_credits"] += credit
+            semesters[course_semester]["total_credits"] += credit
 
-            semesters[semester]["weighted_points"] += (
+            semesters[course_semester]["weighted_points"] += (
                 credit * grade_point
             )
 
@@ -1049,6 +1067,9 @@ def get_student_results(student_id: str):
 
     return {
         "student": dict(student),
-        "semesters": list(semesters.values()),
+        "semesters": [
+            data for data in semesters.values()
+            if data["semester"] == semester
+        ],
         "cgpa": cgpa
     }

@@ -1,0 +1,18 @@
+
+.marks-input {
+    width: 90px;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    outline: none;
+}
+
+.marks-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #bfdbfe;
+}
+
+.save-marks-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

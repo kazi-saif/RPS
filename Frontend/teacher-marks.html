@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPS | Teacher Marks Management</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="teacher-marks.css">
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800">
+
+    <main class="mx-auto max-w-7xl p-5 md:p-10">
+
+        <header class="mb-8">
+            <a href="index.html" class="text-blue-600 hover:underline">
+                ← Back to Dashboard
+            </a>
+
+            <h1 class="mt-5 text-3xl font-bold">
+                Teacher Marks Management
+            </h1>
+
+            <p class="mt-2 text-slate-500">
+                Manage marks for your assigned courses.
+            </p>
+        </header>
+
+        <section class="mb-6 rounded-xl border bg-white p-6 shadow-sm">
+
+            <div class="mb-4">
+                <label for="teacherCode" class="mb-2 block font-medium">
+                    Teacher Code
+                </label>
+
+                <input
+                    id="teacherCode"
+                    type="text"
+                    value="T-002"
+                    class="w-full rounded-lg border p-3"
+                >
+            </div>
+
+            <button
+                id="loadTeacherCoursesBtn"
+                class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+            >
+                Load My Courses
+            </button>
+
+            <div class="mt-5">
+                <label for="marksCourseSelect" class="mb-2 block font-medium">
+                    Select Course
+                </label>
+
+                <select
+                    id="marksCourseSelect"
+                    disabled
+                    class="w-full rounded-lg border p-3"
+                >
+                    <option value="">Load your courses first</option>
+                </select>
+            </div>
+
+        </section>
+
+        <section class="overflow-hidden rounded-xl border bg-white shadow-sm">
+
+            <div class="border-b p-6">
+                <h2 class="text-xl font-semibold">Student Marks</h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    Assignment: 10 | Class Test: 20 |
+                    Midterm: 40 | Final: 80
+                </p>
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full text-left text-sm">
+
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="p-4">Student ID</th>
+                            <th class="p-4">Name</th>
+                            <th class="p-4">Assignment /10</th>
+                            <th class="p-4">Class Test /20</th>
+                            <th class="p-4">Midterm /40</th>
+                            <th class="p-4">Final /80</th>
+                            <th class="p-4">Total</th>
+                            <th class="p-4">Grade</th>
+                            <th class="p-4">GP</th>
+                            <th class="p-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="marksTableBody">
+                        <tr>
+                            <td colspan="10" class="p-10 text-center text-slate-500">
+                                Select a course to load students.
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div
+                id="marksMessage"
+                class="border-t p-5 text-sm text-slate-500"
+            >
+                Waiting for course selection...
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="teacher-marks.js"></script>
+
+</body>
+</html>

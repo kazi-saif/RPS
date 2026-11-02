@@ -53,36 +53,103 @@
             </div>
 
             <!-- Student Search -->
-            <section class="mb-6 rounded-xl border bg-white p-6 shadow-sm">
 
-                <label for="resultStudentId"
-                    class="mb-2 block text-sm font-medium text-slate-700">
-                    Student ID
-                </label>
+<!-- Student Search -->
+<section class="mb-6 rounded-xl border bg-white p-6 shadow-sm">
 
-                <div class="flex flex-col gap-3 sm:flex-row">
+    <div class="grid gap-4 md:grid-cols-2">
 
-                    <input
-                        id="resultStudentId"
-                        type="text"
-                        placeholder="Enter Student ID (e.g. 22003)"
-                        class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                    >
+        <!-- Department -->
+        <div>
+            <label for="departmentSelect"
+                class="mb-2 block text-sm font-medium text-slate-700">
+                Department
+            </label>
 
-                    <button
-                        id="loadResultsBtn"
-                        class="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700">
-                        View Results
-                    </button>
+            <select id="departmentSelect"
+                class="w-full rounded-lg border border-slate-300 px-4 py-3">
+                <option value="">Select Department</option>
+                <option value="1">CSE - Computer Science and Engineering</option>
+                <option value="2">ECE - Electrical and Computer Engineering</option>
+                <option value="3">BBA - Business Administration</option>
+            </select>
+        </div>
 
-                </div>
+        <!-- Academic Session -->
+        <div>
+            <label for="sessionSelect"
+                class="mb-2 block text-sm font-medium text-slate-700">
+                Academic Session
+            </label>
 
-                <p id="resultMessage"
-                    class="mt-3 text-sm text-slate-500">
-                    Enter a student ID to view results.
-                </p>
+            <select id="sessionSelect"
+                class="w-full rounded-lg border border-slate-300 px-4 py-3">
+                <option value="">Select Session</option>
+                <option value="1">2021-2022</option>
+                <option value="2">2022-2023</option>
+            </select>
+        </div>
 
-            </section>
+        <!-- Semester -->
+        <div>
+            <label for="resultSemesterSelect"
+                class="mb-2 block text-sm font-medium text-slate-700">
+                Semester
+            </label>
+
+            <select id="resultSemesterSelect"
+                class="w-full rounded-lg border border-slate-300 px-4 py-3">
+                <option value="">Select Semester</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+                <option value="7">Semester 7</option>
+                <option value="8">Semester 8</option>
+            </select>
+        </div>
+
+        <!-- Student ID -->
+        <div>
+            <label for="resultStudentId"
+                class="mb-2 block text-sm font-medium text-slate-700">
+                Student ID
+            </label>
+
+            <input
+                id="resultStudentId"
+                type="text"
+                placeholder="Enter Student ID (e.g. 22001)"
+                class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+            >
+        </div>
+
+    </div>
+
+    <button
+        id="loadResultsBtn"
+        class="mt-5 w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700">
+        View Results
+    </button>
+
+    <p id="resultMessage" class="mt-3 text-sm text-slate-500">
+        Select department, session, semester and enter Student ID.
+    </p>
+
+</section>
+
+            <!-- Semester GPA -->
+<section class="mb-6 rounded-xl border bg-white p-6 shadow-sm">
+    <p class="text-sm text-slate-500">Semester GPA</p>
+
+    <h3 id="semesterGpa"
+        class="mt-2 text-3xl font-bold text-blue-600">
+        —
+    </h3>
+</section>
+
 
             <!-- Student Information -->
             <section class="mb-6 grid gap-4 md:grid-cols-2">
@@ -120,35 +187,7 @@
 
             </section>
 
-            <!-- Semester Selection -->
-            <section class="mb-6 rounded-xl border bg-white p-6 shadow-sm">
 
-                <label for="resultSemesterSelect"
-                    class="mb-2 block text-sm font-medium text-slate-700">
-                    Select Semester
-                </label>
-
-                <select
-                    id="resultSemesterSelect"
-                    disabled
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3">
-                    <option value="">
-                        Load student results first
-                    </option>
-                </select>
-
-                <div class="mt-4">
-                    <p class="text-sm text-slate-500">
-                        Semester GPA
-                    </p>
-
-                    <h3 id="semesterGpa"
-                        class="mt-1 text-2xl font-bold text-slate-800">
-                        —
-                    </h3>
-                </div>
-
-            </section>
 
             <!-- Course Results -->
             <section class="overflow-hidden rounded-xl border bg-white shadow-sm">
