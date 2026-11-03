@@ -22,7 +22,13 @@ async function loadTeacherCourses() {
 
     try {
         const response = await fetch(
-            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}`
+            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+                }
+            }
+        );
         );
 
         const data = await response.json();
@@ -97,7 +103,12 @@ async function loadCourseMarks() {
 
     try {
         const response = await fetch(
-            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}/${encodeURIComponent(courseCode)}/marks`
+            `${API_URL}/teacher-courses/${encodeURIComponent(teacherCode)}/${encodeURIComponent(courseCode)}/marks`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+                }
+            }
         );
 
         const data = await response.json();
@@ -277,7 +288,8 @@ async function saveStudentMarks(button) {
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
                 },
                 body: JSON.stringify(marks)
             }

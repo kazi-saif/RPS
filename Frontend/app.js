@@ -15,7 +15,13 @@ const cancelButton = document.getElementById("cancelStudentBtn");
 
 async function loadStudents() {
     try {
-        const response = await fetch(`${API_URL}/students`);
+        const token = localStorage.getItem("access_token");
+
+        const response = await fetch(`${API_URL}/students`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
@@ -125,7 +131,10 @@ form.addEventListener("submit", async event => {
     try {
         const response = await fetch(`${API_URL}/students`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+            },
             body: JSON.stringify(student)
         });
 
@@ -156,7 +165,10 @@ async function editStudent(student) {
             `${API_URL}/students/${encodeURIComponent(student.student_id)}`,
             {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+                },
                 body: JSON.stringify({
                     name: name.trim(),
                     email: email.trim()
@@ -184,7 +196,12 @@ async function deleteStudent(studentId) {
     try {
         const response = await fetch(
             `${API_URL}/students/${encodeURIComponent(studentId)}`,
-            { method: "DELETE" }
+            {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+                }
+            }
         );
 
         const result = await response.json();
@@ -469,7 +486,8 @@ async function saveStudentMarks(
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
                 },
                 body: JSON.stringify(marks)
             }

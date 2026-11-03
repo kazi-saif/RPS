@@ -7,11 +7,97 @@ from sqlalchemy import text
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
 
+from app.models.user import User
+
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordRequestForm
+from app.core.security import (
+        verify_password,
+        create_access_token,
+        hash_password,
+        decode_access_token
+    )
+
+from fastapi.security import OAuth2PasswordBearer
+from jwt import InvalidTokenError
+
 app = FastAPI(
-    title="Result Processing System",
-    description="University Result Processing System API",
-    version="1.0.0",
-)
+        title="Result Processing System",
+        description="University Result Processing System API",
+        version="1.0.0",
+    )
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Invalid or expired token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = decode_access_token(token)
+        username = payload.get("sub")
+
+        if username is None:
+            raise credentials_exception
+
+    except InvalidTokenError:
+        raise credentials_exception
+
+    db = SessionLocal()
+    try:
+        user = db.execute(
+            text("SELECT * FROM users WHERE username = :username"),
+            {"username": username}
+        ).mappings().first()
+
+        if user is None:
+            raise credentials_exception
+
+        return user
+
+    finally:
+        db.close()
+
+
+def require_admin(current_user=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+    return current_user
+
+
+def require_teacher(current_user=Depends(get_current_user)):
+    if current_user["role"] != "teacher":
+        raise HTTPException(
+            status_code=403,
+            detail="Teacher access required"
+        )
+    return current_user
+
+
+def require_student(current_user=Depends(get_current_user)):
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=403,
+            detail="Student access required"
+        )
+    return current_user
+
+
+
+@app.get("/me")
+def read_current_user(current_user=Depends(get_current_user)):
+    return {
+        "username": current_user["username"],
+        "role": current_user["role"],
+        "reference_id": current_user["reference_id"]
+    }
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,6 +111,144 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    db = SessionLocal()
+
+    try:
+        user = db.execute(
+            text("SELECT * FROM users WHERE username = :username"),
+            {"username": form_data.username}
+        ).mappings().first()
+
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password"
+            )
+
+        if not verify_password(
+            form_data.password,
+            user["hashed_password"]
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password"
+            )
+
+        access_token = create_access_token({
+            "sub": user["username"],
+            "role": user["role"],
+            "reference_id": user["reference_id"]
+        })
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "role": user["role"],
+            "username": user["username"]
+        }
+
+    finally:
+        db.close()
+
+
+@app.post("/create-admin", dependencies=[Depends(require_admin)])
+def create_admin(username: str, password: str):
+    db = SessionLocal()
+
+    try:
+        existing_user = db.execute(
+            text("SELECT id FROM users WHERE username = :username"),
+            {"username": username}
+        ).first()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Username already exists"
+            )
+
+        hashed_password = hash_password(password)
+
+        db.execute(
+            text("""
+                INSERT INTO users (username, hashed_password, role)
+                VALUES (:username, :hashed_password, 'admin')
+            """),
+            {
+                "username": username,
+                "hashed_password": hashed_password
+            }
+        )
+
+        db.commit()
+
+        return {"message": "Admin account created successfully"}
+
+    finally:
+        db.close()
+
+
+@app.post("/create-teacher-accounts", dependencies=[Depends(require_admin)])
+def create_teacher_accounts():
+    db = SessionLocal()
+
+    try:
+        teachers = db.execute(
+            text("""
+                SELECT teacher_id
+                FROM teachers
+                WHERE department_id = 1
+                ORDER BY teacher_id
+            """)
+        ).mappings().all()
+
+        created_accounts = []
+
+        for teacher in teachers:
+            teacher_id = teacher["teacher_id"]
+
+            existing_user = db.execute(
+                text("SELECT id FROM users WHERE username = :username"),
+                {"username": teacher_id}
+            ).first()
+
+            if existing_user:
+                continue
+
+            password = f"{teacher_id}@Rps2026"
+
+            db.execute(
+                text("""
+                    INSERT INTO users
+                    (username, hashed_password, role, reference_id)
+                    VALUES (:username, :password, 'teacher', :reference_id)
+                """),
+                {
+                    "username": teacher_id,
+                    "password": hash_password(password),
+                    "reference_id": teacher_id
+                }
+            )
+
+            created_accounts.append({
+                "username": teacher_id,
+                "temporary_password": password
+            })
+
+        db.commit()
+
+        return {
+            "message": "Teacher accounts created",
+            "created": created_accounts
+        }
+
+    finally:
+        db.close()
+
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -80,7 +304,7 @@ def home():
     }
 
 
-@app.get("/students")
+@app.get("/students", dependencies=[Depends(require_admin)])
 def get_students():
     with engine.connect() as connection:
         result = connection.execute(
@@ -94,7 +318,7 @@ def get_students():
     return {"students": students}
 
 
-@app.post("/students", status_code=201)
+@app.post("/students", status_code=201, dependencies=[Depends(require_admin)])
 def create_student(student: StudentCreate):
     query = text(
         """
@@ -131,7 +355,7 @@ def create_student(student: StudentCreate):
 
 
 
-@app.put("/students/{student_id}")
+@app.put("/students/{student_id}", dependencies=[Depends(require_admin)])
 def update_student(student_id: str, student: StudentUpdate):
     query = text(
         """
@@ -180,7 +404,7 @@ def update_student(student_id: str, student: StudentUpdate):
 
 
 
-@app.delete("/students/{student_id}")
+@app.delete("/students/{student_id}", dependencies=[Depends(require_admin)])
 def delete_student(student_id: str):
     db = SessionLocal()
 
@@ -220,7 +444,7 @@ def delete_student(student_id: str):
 
 
 
-@app.get("/courses")
+@app.get("/courses", dependencies=[Depends(require_admin)])
 def get_courses():
     query = text("""
         SELECT id, course_code, course_name, credit, semester
@@ -238,7 +462,7 @@ def get_courses():
 
 # courese work
 
-@app.post("/courses", status_code=201)
+@app.post("/courses", status_code=201, dependencies=[Depends(require_admin)])
 def create_course(course: CourseCreate):
 
     query = text("""
@@ -287,7 +511,7 @@ def create_course(course: CourseCreate):
 
 #pur api for course
 
-@app.put("/courses/{course_id}")
+@app.put("/courses/{course_id}", dependencies=[Depends(require_admin)])
 def update_course(course_id: int, course: CourseUpdate):
 
     query = text("""
@@ -335,8 +559,7 @@ def update_course(course_id: int, course: CourseUpdate):
 
         raise
 
-
-@app.delete("/courses/{course_id}")
+@app.delete("/courses/{course_id}", dependencies=[Depends(require_admin)])
 def delete_course(course_id: int):
 
     query = text("""
@@ -366,7 +589,7 @@ def delete_course(course_id: int):
 
 # teacher post api
 
-@app.post("/teachers", status_code=201)
+@app.post("/teachers", status_code=201, dependencies=[Depends(require_admin)])
 def create_teacher(teacher: TeacherCreate):
 
     query = text("""
@@ -409,7 +632,7 @@ def create_teacher(teacher: TeacherCreate):
 
         raise
 
-@app.get("/teachers")
+@app.get("/teachers", dependencies=[Depends(require_admin)])
 def get_teachers():
 
     query = text("""
@@ -428,7 +651,7 @@ def get_teachers():
 
     return {"teachers": teachers}
 
-@app.put("/teachers/{teacher_id}")
+@app.put("/teachers/{teacher_id}", dependencies=[Depends(require_admin)])
 def update_teacher(teacher_id: int, teacher: TeacherUpdate):
 
     query = text("""
@@ -472,7 +695,7 @@ def update_teacher(teacher_id: int, teacher: TeacherUpdate):
 
         raise
 
-@app.delete("/teachers/{teacher_id}")
+@app.delete("/teachers/{teacher_id}", dependencies=[Depends(require_admin)])
 def delete_teacher(teacher_id: int):
 
     query = text("""
@@ -501,7 +724,7 @@ def delete_teacher(teacher_id: int):
     }
 
 
-@app.post("/course-assignments", status_code=201)
+@app.post("/course-assignments", status_code=201, dependencies=[Depends(require_admin)])
 def create_course_assignment(assignment: CourseAssignmentCreate):
 
     query = text("""
@@ -541,7 +764,7 @@ def create_course_assignment(assignment: CourseAssignmentCreate):
 
         raise
 
-@app.get("/course-assignments")
+@app.get("/course-assignments", dependencies=[Depends(require_admin)])
 def get_course_assignments():
 
     query = text("""
@@ -565,7 +788,7 @@ def get_course_assignments():
     return {"assignments": assignments}
 
 
-@app.delete("/course-assignments/{assignment_id}")
+@app.delete("/course-assignments/{assignment_id}", dependencies=[Depends(require_admin)])
 def delete_course_assignment(assignment_id: int):
 
     query = text("""
@@ -593,7 +816,17 @@ def delete_course_assignment(assignment_id: int):
 
 
 @app.get("/teacher-courses/{teacher_code}")
-def get_teacher_courses(teacher_code: str):
+def get_teacher_courses(
+    teacher_code: str,
+    current_user=Depends(require_teacher)
+):
+
+    if teacher_code != current_user["reference_id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own courses"
+        )
+
 
     query = text("""
         SELECT
@@ -623,7 +856,17 @@ def get_teacher_courses(teacher_code: str):
 
 
 @app.get("/teacher-courses/{teacher_code}/{course_code}/students")
-def get_course_students(teacher_code: str, course_code: str):
+def get_course_students(
+    teacher_code: str,
+    course_code: str,
+    current_user=Depends(require_teacher)
+):
+
+    if teacher_code != current_user["reference_id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own courses"
+        )
 
     with engine.connect() as connection:
 
@@ -681,7 +924,79 @@ def get_course_students(teacher_code: str, course_code: str):
     }
 
 
+class CourseStudentCreate(BaseModel):
+    student_id: str
+    course_code: str
 
+
+@app.post("/course-students", status_code=201, dependencies=[Depends(require_admin)])
+def add_student_to_course(data: CourseStudentCreate):
+
+    with engine.begin() as connection:
+
+        # Check whether student and course exist
+        check_query = text("""
+            SELECT c.semester
+            FROM courses c
+            CROSS JOIN students s
+            WHERE c.course_code = :course_code
+            AND s.student_id = :student_id
+        """)
+
+        result = connection.execute(
+            check_query,
+            {
+                "course_code": data.course_code,
+                "student_id": data.student_id
+            }
+        ).first()
+
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail="Student or course not found"
+            )
+
+        # Add student to course
+        insert_query = text("""
+            INSERT INTO course_students (
+                student_id,
+                course_code,
+                semester
+            )
+            VALUES (
+                :student_id,
+                :course_code,
+                :semester
+            )
+            RETURNING id, student_id, course_code, semester
+        """)
+
+        try:
+            new_enrollment = connection.execute(
+                insert_query,
+                {
+                    "student_id": data.student_id,
+                    "course_code": data.course_code,
+                    "semester": result.semester
+                }
+            ).fetchone()
+
+        except Exception as error:
+            from sqlalchemy.exc import IntegrityError
+
+            if isinstance(error, IntegrityError):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Student is already enrolled in this course"
+                ) from error
+
+            raise
+
+    return {
+        "message": "Student added to course successfully",
+        "enrollment": dict(new_enrollment._mapping)
+    }
 
 
 
@@ -718,7 +1033,17 @@ def calculate_grade(total_marks):
 
 
 @app.get("/teacher-courses/{teacher_code}/{course_code}/marks")
-def get_course_marks(teacher_code: str, course_code: str):
+def get_course_marks(
+    teacher_code: str,
+    course_code: str,
+    current_user=Depends(require_teacher)
+):
+
+    if teacher_code != current_user["reference_id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own courses"
+        )
 
     with engine.connect() as connection:
 
@@ -789,8 +1114,15 @@ def save_course_marks(
     teacher_code: str,
     course_code: str,
     student_id: str,
-    marks: MarksCreate
+    marks: MarksCreate,
+    current_user=Depends(require_teacher)
 ):
+
+    if teacher_code != current_user["reference_id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only update marks for your own courses"
+        )
 
     # Validate individual marks
     if not 0 <= marks.assignment_marks <= 10:
@@ -946,10 +1278,25 @@ def get_student_results(
     student_id: str,
     department_id: int,
     session_id: int,
-    semester: int
+    semester: int,
+    current_user=Depends(get_current_user)
 ):
 
+    if current_user["role"] == "student":
+        if student_id != current_user["reference_id"]:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only view your own results"
+            )
+
+    elif current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
     # Validate semester
+
     if semester < 1 or semester > 8:
         raise HTTPException(
             status_code=400,
