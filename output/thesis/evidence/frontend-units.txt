@@ -1,0 +1,14 @@
+✔ confirm and cancel resolve without native browser popups (14.256642ms)
+✔ cancel preserves unsaved marks; confirm discards them (1.496365ms)
+✔ forced sign-out clears dirty marks and open dialogs (1.427074ms)
+✔ a stale unauthorized response does not sign out a newer login (3.484737ms)
+✔ invalid server responses show a readable message (1.834049ms)
+✔ review dialogs can stay open for a CSV preview step (1.256167ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32.131884

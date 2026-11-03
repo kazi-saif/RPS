@@ -1,0 +1,17 @@
+test_all_grade_thresholds (__main__.GradingUnitTests.test_all_grade_thresholds) ... ok
+test_just_below_a_plus (__main__.GradingUnitTests.test_just_below_a_plus) ... ok
+test_just_below_pass_fails (__main__.GradingUnitTests.test_just_below_pass_fails) ... ok
+test_missing_marks_remain_pending (__main__.GradingUnitTests.test_missing_marks_remain_pending) ... ok
+test_zero_and_maximum (__main__.GradingUnitTests.test_zero_and_maximum) ... ok
+test_accepts_two_decimal_places (__main__.MarksValidationUnitTests.test_accepts_two_decimal_places) ... ok
+test_component_limits (__main__.MarksValidationUnitTests.test_component_limits) ... ok
+test_missing_component_rejected (__main__.MarksValidationUnitTests.test_missing_component_rejected) ... ok
+test_nonfinite_values_rejected (__main__.MarksValidationUnitTests.test_nonfinite_values_rejected) ... ok
+test_rejects_three_decimal_places (__main__.MarksValidationUnitTests.test_rejects_three_decimal_places) ... ok
+test_revision_must_be_positive (__main__.MarksValidationUnitTests.test_revision_must_be_positive) ... ok
+test_valid_full_marks (__main__.MarksValidationUnitTests.test_valid_full_marks) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.001s
+
+OK

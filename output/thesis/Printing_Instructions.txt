@@ -1,0 +1,20 @@
+RPS THESIS BOOK PRINTING INSTRUCTIONS
+
+Author: Kazi Saif Hossain Emon
+Submission: 4 November 2026
+
+Use RPS_Thesis_Book.pdf for printing. Total: 34 PDF pages.
+Paper: A4. Print single-sided at Actual size / 100%.
+Keep the existing margins; the left margin is 1.25 inches for binding.
+
+COLOR: PDF pages 18-22 and 25-29 (10 pages).
+BLACK AND WHITE: PDF pages 1-17, 23-24 and 30-34 (24 pages).
+These are PDF viewer page positions, including the title page,
+not the Roman or Arabic numbers printed in the footer.
+
+Keep all sheets in original PDF order. Add a clear front cover and
+a backing sheet, then spiral-bind along the left edge.
+Sign the declaration page before submission.
+
+The Word file is provided for editing. If edited, export again and
+recheck pagination before using the color-page ranges above.

@@ -12,3 +12,11 @@ __pycache__/
 # Local editor and OS files
 .vscode/
 .DS_Store
+
+# RPS local data and authentication key
+*.sqlite3
+*.sqlite3-*
+.jwt-secret
+backups/
+# Private student import files
+Backend/imports/
